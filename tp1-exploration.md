@@ -551,3 +551,17 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>curl -s http://127.0.0.1:8
 {"django-version":"6.1.2","hostname":"574a0a11bda8","installed_apps":{"django_filters":"26.2","django_prometheus":"2.4.0","django_rq":"4.2.0","django_tables2":"3.0.1","drf_spectacular":"0.30.0","drf_spectacular_sidecar":"2026.10.1","mptt":"0.18.0","rest_framework":"3.18.0","social_django":"6.1.0","taggit":"6.1.0","timezone_field":"7.2.2"},"netbox-version":"4.7.3","netbox-full-version":"4.7.3-Docker-5.1.1","plugins":{},"python-version":"3.14.4","rq-workers-running":0}
 C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>
 
+## 5 ##
+
+### Création du cluster Docker
+
+C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/cluster-types/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"Docker\", \"slug\": \"docker\"}"
+{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/cluster-types/1/","display_url":"http://127.0.0.1:8080/virtualization/cluster-types/1/","display":"Docker","name":"Docker","slug":"docker","description":"","owner":null,"comments":"","tags":[],"custom_fields":{},"created":"2026-10-26T11:02:40.158537Z","last_updated":"2026-10-26T11:02:40.158588Z","cluster_count":0}
+201
+
+### Création d'un cluster docker-local
+
+C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/clusters/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"docker-local\", \"type\": {\"slug\": \"docker\"}, \"status\": \"active\"}"
+{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/clusters/1/","display_url":"http://127.0.0.1:8080/virtualization/clusters/1/","display":"docker-local","name":"docker-local","type":{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/cluster-types/1/","display":"Docker","name":"Docker","slug":"docker","description":""},"group":null,"status":{"value":"active","label":"Active"},"tenant":null,"scope_type":null,"scope_id":null,"scope":null,"description":"","owner":null,"comments":"","tags":[],"custom_fields":{},"created":"2026-10-26T11:06:33.242934Z","last_updated":"2026-10-26T11:06:33.243022Z","device_count":0,"virtualmachine_count":0,"allocated_vcpus":null,"allocated_memory":null,"allocated_disk":null}
+201
+
