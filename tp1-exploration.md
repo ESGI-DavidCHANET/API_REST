@@ -538,3 +538,16 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s -w "%{http_code}" "ht
 
 ## 4 ##
 
+### Obtention du token
+
+C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>curl -s -X POST http://127.0.0.1:8080/api/users/tokens/provision/ -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"username\": \"admin\", \"password\": \"admin\"}"
+
+{"id":1,"url":"http://127.0.0.1:8080/api/users/tokens/1/","display_url":"http://127.0.0.1:8080/users/tokens/1/","display":"q1QjvHx4BSTX","version":2,"user":{"id":1,"url":"http://127.0.0.1:8080/api/users/users/1/","display":"admin","username":"admin"},"key":"q1QjvHx4BSTX","created":"2026-10-26T10:31:34.946705Z","expires":null,"last_used":null,"enabled":true,"write_enabled":true,"description":"","allowed_ips":[],"token":"fddSBrCdBDlpv0JK5SnkOtvyEW8kWVnhoveKiGvf"}
+
+### Vérification du token
+
+C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>curl -s http://127.0.0.1:8080/api/status/ -H "Authorization: Bearer nbt_q1QjvHx4BSTX.fddSBrCdBDlpv0JK5SnkOtvyEW8kWVnhoveKiGvf" -H "Accept: application/json"
+
+{"django-version":"6.1.2","hostname":"574a0a11bda8","installed_apps":{"django_filters":"26.2","django_prometheus":"2.4.0","django_rq":"4.2.0","django_tables2":"3.0.1","drf_spectacular":"0.30.0","drf_spectacular_sidecar":"2026.10.1","mptt":"0.18.0","rest_framework":"3.18.0","social_django":"6.1.0","taggit":"6.1.0","timezone_field":"7.2.2"},"netbox-version":"4.7.3","netbox-full-version":"4.7.3-Docker-5.1.1","plugins":{},"python-version":"3.14.4","rq-workers-running":0}
+C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>
+

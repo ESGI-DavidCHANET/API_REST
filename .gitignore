@@ -1,0 +1,13 @@
+# Secrets
+.env
+login.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Éditeurs
+.vscode/
+.idea/
