@@ -1,22 +1,46 @@
-# API_REST -- TP1
-## 1 ##
+# API REST — TP1 : exploration
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>docker run -d --name web1 --label adminapi.managed=true nginx:alpine
+Répertoire de travail : `C:\Users\david\Desktop\ESGI\M1\API_REST\Github`
+
+---
+
+## 1. Conteneurs de test
+
+Un conteneur géré (avec le label) et un conteneur « intrus » (sans label) :
+
+```cmd
+docker run -d --name web1 --label adminapi.managed=true nginx:alpine
+```
+```text
 830fcda23bef9665a69710d318eebc07b96cf9f0900400e939257a891a54b003
+```
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>docker run -d --name intrus nginx:alpine
+```cmd
+docker run -d --name intrus nginx:alpine
+```
+```text
 e570fb9ea4a1c9157e9fe518840e1bb5959ca9a3c14133592730dddb024f6b20
+```
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>docker ps
+```cmd
+docker ps
+```
+```text
 CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS     NAMES
 e570fb9ea4a1   nginx:alpine   "/docker-entrypoint.…"   17 seconds ago   Up 16 seconds   80/tcp    intrus
 830fcda23bef   nginx:alpine   "/docker-entrypoint.…"   18 seconds ago   Up 18 seconds   80/tcp    web1
+```
 
-## 2 ##
+---
 
-### Lisez la version
+## 2. Exploration de l'API Docker Engine
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:2375/version" | python -m json.tool
+### 2.1 Lire la version
+
+```cmd
+curl.exe -s "http://localhost:2375/version" | python -m json.tool
+```
+```json
 {
     "Platform": {
         "Name": "Docker Desktop 4.83.0 (234302)"
@@ -71,10 +95,14 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:237
     "KernelVersion": "6.18.33.2-microsoft-standard-WSL2",
     "BuildTime": "2026-07-16T16:12:20.000000000+00:00"
 }
+```
 
-### Listez tous les conteneurs
+### 2.2 Lister tous les conteneurs
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:2375/containers/json?all=true" | python -m json.tool
+```cmd
+curl.exe -s "http://localhost:2375/containers/json?all=true" | python -m json.tool
+```
+```json
 [
     {
         "Id": "e570fb9ea4a1c9157e9fe518840e1bb5959ca9a3c14133592730dddb024f6b20",
@@ -220,10 +248,16 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:237
         "Mounts": []
     }
 ]
+```
 
-### Listez seulement ceux qui portent le label
+### 2.3 Lister seulement les conteneurs qui portent le label
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:2375/containers/json?all=true&filters=%7B%22label%22%3A%5B%22adminapi.managed%3Dtrue%22%5D%7D" | python -m json.tool
+Filtre `{"label":["adminapi.managed=true"]}`, encodé dans l'URL :
+
+```cmd
+curl.exe -s "http://localhost:2375/containers/json?all=true&filters=%7B%22label%22%3A%5B%22adminapi.managed%3Dtrue%22%5D%7D" | python -m json.tool
+```
+```json
 [
     {
         "Id": "830fcda23bef9665a69710d318eebc07b96cf9f0900400e939257a891a54b003",
@@ -297,11 +331,15 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:237
         },
         "Mounts": []
     }
+]
+```
 
+### 2.4 Lire le détail de `web1`
 
-### Lisez le détail de web1
-
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:2375/containers/web1/json" | python -m json.tool
+```cmd
+curl.exe -s "http://localhost:2375/containers/web1/json" | python -m json.tool
+```
+```json
 {
     "Id": "830fcda23bef9665a69710d318eebc07b96cf9f0900400e939257a891a54b003",
     "Created": "2026-10-26T09:21:12.373522042Z",
@@ -523,45 +561,182 @@ C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s "http://localhost:237
         }
     }
 }
+```
 
-## 3 ##
+---
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s -o NUL -w "%{http_code}" -X POST "http://localhost:2375/containers/web1/stop"
+## 3. Codes de retour de l'API Docker
+
+| Requête | Code |
+|---|---|
+| `POST /containers/web1/stop` (conteneur démarré) | `204` |
+| `POST /containers/web1/stop` (déjà arrêté) | `304` |
+| `GET /containers/nexistepas/json` (inconnu) | `404` |
+
+```cmd
+curl.exe -s -o NUL -w "%{http_code}" -X POST "http://localhost:2375/containers/web1/stop"
+```
+```text
 204
+```
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s -o NUL -w "%{http_code}" -X POST "http://localhost:2375/containers/web1/stop"
+```cmd
+curl.exe -s -o NUL -w "%{http_code}" -X POST "http://localhost:2375/containers/web1/stop"
+```
+```text
 304
+```
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl.exe -s -w "%{http_code}" "http://localhost:2375/containers/nexistepas/json"
+```cmd
+curl.exe -s -w "%{http_code}" "http://localhost:2375/containers/nexistepas/json"
+```
+```text
 {"message":"No such container: nexistepas"}
 404
+```
 
-## 4 ##
+---
 
-### Obtention du token
+## 4. Token NetBox
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>curl -s -X POST http://127.0.0.1:8080/api/users/tokens/provision/ -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"username\": \"admin\", \"password\": \"admin\"}"
+Répertoire : `...\Github\projet`
 
-{"id":1,"url":"http://127.0.0.1:8080/api/users/tokens/1/","display_url":"http://127.0.0.1:8080/users/tokens/1/","display":"q1QjvHx4BSTX","version":2,"user":{"id":1,"url":"http://127.0.0.1:8080/api/users/users/1/","display":"admin","username":"admin"},"key":"q1QjvHx4BSTX","created":"2026-10-26T10:31:34.946705Z","expires":null,"last_used":null,"enabled":true,"write_enabled":true,"description":"","allowed_ips":[],"token":"fddSBrCdBDlpv0JK5SnkOtvyEW8kWVnhoveKiGvf"}
+> Les valeurs secrètes du token sont masquées (`<secret>`). La valeur réelle est rangée dans `.env`, jamais dans le dépôt.
 
-### Vérification du token
+### 4.1 Obtention du token
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>curl -s http://127.0.0.1:8080/api/status/ -H "Authorization: Bearer nbt_q1QjvHx4BSTX.fddSBrCdBDlpv0JK5SnkOtvyEW8kWVnhoveKiGvf" -H "Accept: application/json"
+```cmd
+curl -s -X POST http://127.0.0.1:8080/api/users/tokens/provision/ -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"username\": \"admin\", \"password\": \"admin\"}"
+```
+```json
+{
+    "id": 1,
+    "url": "http://127.0.0.1:8080/api/users/tokens/1/",
+    "display_url": "http://127.0.0.1:8080/users/tokens/1/",
+    "display": "<key>",
+    "version": 2,
+    "user": {
+        "id": 1,
+        "url": "http://127.0.0.1:8080/api/users/users/1/",
+        "display": "admin",
+        "username": "admin"
+    },
+    "key": "<key>",
+    "created": "2026-10-26T10:31:34.946705Z",
+    "expires": null,
+    "last_used": null,
+    "enabled": true,
+    "write_enabled": true,
+    "description": "",
+    "allowed_ips": [],
+    "token": "<secret>"
+}
+```
 
-{"django-version":"6.1.2","hostname":"574a0a11bda8","installed_apps":{"django_filters":"26.2","django_prometheus":"2.4.0","django_rq":"4.2.0","django_tables2":"3.0.1","drf_spectacular":"0.30.0","drf_spectacular_sidecar":"2026.10.1","mptt":"0.18.0","rest_framework":"3.18.0","social_django":"6.1.0","taggit":"6.1.0","timezone_field":"7.2.2"},"netbox-version":"4.7.3","netbox-full-version":"4.7.3-Docker-5.1.1","plugins":{},"python-version":"3.14.4","rq-workers-running":0}
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github\projet>
+Token v2 : la valeur à utiliser est `nbt_<key>.<secret>`.
 
-## 5 ##
+### 4.2 Vérification du token
 
-### Création du cluster Docker
+```cmd
+curl -s http://127.0.0.1:8080/api/status/ -H "Authorization: Bearer nbt_<key>.<secret>" -H "Accept: application/json"
+```
+```json
+{
+    "django-version": "6.1.2",
+    "hostname": "574a0a11bda8",
+    "installed_apps": {
+        "django_filters": "26.2",
+        "django_prometheus": "2.4.0",
+        "django_rq": "4.2.0",
+        "django_tables2": "3.0.1",
+        "drf_spectacular": "0.30.0",
+        "drf_spectacular_sidecar": "2026.10.1",
+        "mptt": "0.18.0",
+        "rest_framework": "3.18.0",
+        "social_django": "6.1.0",
+        "taggit": "6.1.0",
+        "timezone_field": "7.2.2"
+    },
+    "netbox-version": "4.7.3",
+    "netbox-full-version": "4.7.3-Docker-5.1.1",
+    "plugins": {},
+    "python-version": "3.14.4",
+    "rq-workers-running": 0
+}
+```
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/cluster-types/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"Docker\", \"slug\": \"docker\"}"
-{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/cluster-types/1/","display_url":"http://127.0.0.1:8080/virtualization/cluster-types/1/","display":"Docker","name":"Docker","slug":"docker","description":"","owner":null,"comments":"","tags":[],"custom_fields":{},"created":"2026-10-26T11:02:40.158537Z","last_updated":"2026-10-26T11:02:40.158588Z","cluster_count":0}
-201
+---
 
-### Création d'un cluster docker-local
+## 5. Cluster NetBox
 
-C:\Users\david\Desktop\ESGI\M1\API_REST\Github>curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/clusters/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"docker-local\", \"type\": {\"slug\": \"docker\"}, \"status\": \"active\"}"
-{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/clusters/1/","display_url":"http://127.0.0.1:8080/virtualization/clusters/1/","display":"docker-local","name":"docker-local","type":{"id":1,"url":"http://127.0.0.1:8080/api/virtualization/cluster-types/1/","display":"Docker","name":"Docker","slug":"docker","description":""},"group":null,"status":{"value":"active","label":"Active"},"tenant":null,"scope_type":null,"scope_id":null,"scope":null,"description":"","owner":null,"comments":"","tags":[],"custom_fields":{},"created":"2026-10-26T11:06:33.242934Z","last_updated":"2026-10-26T11:06:33.243022Z","device_count":0,"virtualmachine_count":0,"allocated_vcpus":null,"allocated_memory":null,"allocated_disk":null}
-201
+Variables cmd utilisées : `%N%` (URL de l'API NetBox) et `%TOKEN%` (token NetBox).
 
+### 5.1 Création du type de cluster « Docker »
+
+```cmd
+curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/cluster-types/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"Docker\", \"slug\": \"docker\"}"
+```
+```json
+{
+    "id": 1,
+    "url": "http://127.0.0.1:8080/api/virtualization/cluster-types/1/",
+    "display_url": "http://127.0.0.1:8080/virtualization/cluster-types/1/",
+    "display": "Docker",
+    "name": "Docker",
+    "slug": "docker",
+    "description": "",
+    "owner": null,
+    "comments": "",
+    "tags": [],
+    "custom_fields": {},
+    "created": "2026-10-26T11:02:40.158537Z",
+    "last_updated": "2026-10-26T11:02:40.158588Z",
+    "cluster_count": 0
+}
+```
+Code : `201`
+
+### 5.2 Création du cluster `docker-local`
+
+```cmd
+curl -s -w "\n%{http_code}\n" -X POST %N%/virtualization/clusters/ -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"name\": \"docker-local\", \"type\": {\"slug\": \"docker\"}, \"status\": \"active\"}"
+```
+```json
+{
+    "id": 1,
+    "url": "http://127.0.0.1:8080/api/virtualization/clusters/1/",
+    "display_url": "http://127.0.0.1:8080/virtualization/clusters/1/",
+    "display": "docker-local",
+    "name": "docker-local",
+    "type": {
+        "id": 1,
+        "url": "http://127.0.0.1:8080/api/virtualization/cluster-types/1/",
+        "display": "Docker",
+        "name": "Docker",
+        "slug": "docker",
+        "description": ""
+    },
+    "group": null,
+    "status": {
+        "value": "active",
+        "label": "Active"
+    },
+    "tenant": null,
+    "scope_type": null,
+    "scope_id": null,
+    "scope": null,
+    "description": "",
+    "owner": null,
+    "comments": "",
+    "tags": [],
+    "custom_fields": {},
+    "created": "2026-10-26T11:06:33.242934Z",
+    "last_updated": "2026-10-26T11:06:33.243022Z",
+    "device_count": 0,
+    "virtualmachine_count": 0,
+    "allocated_vcpus": null,
+    "allocated_memory": null,
+    "allocated_disk": null
+}
+```
+Code : `201`
