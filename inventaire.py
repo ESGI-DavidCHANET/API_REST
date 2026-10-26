@@ -1,5 +1,7 @@
 import os
 import requests
+import json
+from datetime import datetime, timezone
 
 DOCKER = os.environ.get("DOCKER_API_URL", "http://127.0.0.1:2375").rstrip("/")
 TIMEOUT = 10
@@ -35,8 +37,21 @@ def inventaire_docker(session):
 def main():
     with requests.Session() as session:
         conteneurs = inventaire_docker(session)
+
+    inventaire = {
+        "date_releve": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "docker": {"url": DOCKER, "conteneurs": conteneurs},
+    }
+    with open("inventaire.json", "w", encoding="utf-8") as f:
+        json.dump(inventaire, f, ensure_ascii=False, indent=2)
+
+    print(f"Relevé du {inventaire['date_releve']}")
+    print(f"  {'NOM':<28} {'IMAGE':<34} {'ÉTAT':<10} {'CPU %':>7} {'MÉM. Mo':>9}")
     for c in conteneurs:
-        print(c)
+        cpu = f"{c['cpu_pourcent']:.2f}" if "cpu_pourcent" in c else "-"
+        mem = f"{c['memoire_mo']:.1f}" if "memoire_mo" in c else "-"
+        print(f"  {c['nom']:<28} {c['image'][:34]:<34} {c['etat']:<10} {cpu:>7} {mem:>9}")
+    print("\nInventaire écrit dans inventaire.json")
 
 
 if __name__ == "__main__":
