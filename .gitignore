@@ -11,3 +11,5 @@ venv/
 # Éditeurs
 .vscode/
 .idea/
+
+inventaire.json

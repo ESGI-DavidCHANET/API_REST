@@ -1,9 +1,14 @@
 import os
 import requests
 import json
+import sys
 from datetime import datetime, timezone
 
 DOCKER = os.environ.get("DOCKER_API_URL", "http://127.0.0.1:2375").rstrip("/")
+NETBOX = os.environ.get("NETBOX_URL", "http://127.0.0.1:8080").rstrip("/")
+JETON = os.environ.get("NETBOX_TOKEN")
+if not JETON:
+    sys.exit("ERREUR : variable d'environnement NETBOX_TOKEN absente") 
 TIMEOUT = 10
 
 def calculer_cpu(stats):
@@ -33,14 +38,35 @@ def inventaire_docker(session):
         resultat.append(fiche)
     return resultat
 
+def releve_netbox(session):
+    r = session.get(f"{NETBOX}/api/status/", timeout=TIMEOUT)
+    r.raise_for_status()
+    version = r.json().get("netbox-version")
+
+    url = f"{NETBOX}/api/core/object-types/?limit=50"
+    total_lu, annonce, pages = 0, None, 0
+    while url:                      # tant qu'il reste une page
+        r = session.get(url, timeout=TIMEOUT)
+        r.raise_for_status()
+        page = r.json()
+        annonce = page["count"]
+        total_lu += len(page["results"])
+        pages += 1
+        url = page["next"]          # None à la dernière page, ce qui arrête la boucle
+
+    return {"version": version, "types_objets": total_lu,
+            "types_objets_annonces": annonce, "pages_lues": pages}
 
 def main():
     with requests.Session() as session:
         conteneurs = inventaire_docker(session)
+        session.headers.update({"Authorization": f"Bearer {JETON}"})
+        netbox = releve_netbox(session)
 
     inventaire = {
         "date_releve": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "docker": {"url": DOCKER, "conteneurs": conteneurs},
+        "netbox": {"url": NETBOX, **netbox},
     }
     with open("inventaire.json", "w", encoding="utf-8") as f:
         json.dump(inventaire, f, ensure_ascii=False, indent=2)
@@ -51,8 +77,22 @@ def main():
         cpu = f"{c['cpu_pourcent']:.2f}" if "cpu_pourcent" in c else "-"
         mem = f"{c['memoire_mo']:.1f}" if "memoire_mo" in c else "-"
         print(f"  {c['nom']:<28} {c['image'][:34]:<34} {c['etat']:<10} {cpu:>7} {mem:>9}")
+    verif = "OK" if netbox["types_objets"] == netbox["types_objets_annonces"] else "ÉCART"
+    print(f"\nNetBox {netbox['version']} : {netbox['types_objets']} types lus "
+          f"sur {netbox['pages_lues']} pages, {netbox['types_objets_annonces']} annoncés ({verif})")
     print("\nInventaire écrit dans inventaire.json")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except requests.exceptions.ConnectionError as e:
+        print(f"ERREUR : connexion impossible à {e.request.url}\n"
+              f"  Le service est-il démarré ? (docker compose ps)", file=sys.stderr)
+        sys.exit(1)
+    except requests.exceptions.Timeout as e:
+        print(f"ERREUR : pas de réponse de {e.request.url} en {TIMEOUT} s", file=sys.stderr)
+        sys.exit(1)
+    except requests.exceptions.HTTPError as e:
+        print(f"ERREUR : HTTP {e.response.status_code} sur {e.request.url}", file=sys.stderr)
+        sys.exit(1)
